@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Survivorship Care Workflow Assistant</title>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#ec6aa6"><link rel="apple-touch-icon" href="icons/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><script src="vendor/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f6f8f8;--card:#fff;--tx:#12302f;--mu:#5d7473;--ln:#d9e4e3;--ac:#0f766e;--ac2:#e2f3f1;--wn:#b45309;--wb:#fef3c7;--rd:#b91c3c;--rb:#fde8ec;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1b1b;--card:#152626;--tx:#e6f2f1;--mu:#93aeac;--ln:#284241;--ac:#2dd4bf;--ac2:#10393a;--wn:#fbbf24;--wb:#3a2e10;--rd:#fb7185;--rb:#3d1620;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1b1b;--card:#152626;--tx:#e6f2f1;--mu:#93aeac;--ln:#284241;--ac:#2dd4bf;--ac2:#10393a;--wn:#fbbf24;--wb:#3a2e10;--rd:#fb7185;--rb:#3d1620;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+header,main{max-width:1000px;margin:auto;padding:0 16px}header{padding-top:16px}
+h1{font-size:19px;margin:0}h2{font-size:15px;margin:0 0 8px}.sub{color:var(--mu);font-size:13px}
+nav{display:flex;gap:6px;max-width:1000px;margin:8px auto;padding:0 16px;overflow-x:auto}
+nav button{border:1px solid var(--ln);background:var(--card);color:var(--tx);padding:7px 13px;border-radius:20px;cursor:pointer;white-space:nowrap;font:inherit}
+nav button.on{background:var(--ac);color:var(--bg);border-color:var(--ac)}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:12px;margin-bottom:10px}
+summary{cursor:pointer;font-weight:600;font-size:15px}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+button.b{border:1px solid var(--ac);background:var(--ac);color:var(--bg);padding:5px 11px;border-radius:8px;cursor:pointer;font:inherit;font-size:13px}button.g{background:transparent;color:var(--ac)}
+.tag{font-size:11px;padding:1px 8px;border-radius:10px;background:var(--ac2);color:var(--ac);white-space:nowrap}.tag.w{background:var(--wb);color:var(--wn)}.tag.r{background:var(--rb);color:var(--rd)}
+input,select,textarea{font:inherit;font-size:14px;color:var(--tx);background:var(--bg);border:1px solid var(--ln);border-radius:8px;padding:5px 7px;width:100%}
+textarea{min-height:110px}label{font-size:12px;color:var(--mu);display:block;margin-top:6px}
+.gr{display:grid;grid-template-columns:minmax(120px,2fr) 110px 2fr;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--ln)}
+.hl{color:var(--rd);font-weight:600}
+@media(max-width:560px){.gr{grid-template-columns:1fr 1fr}.gr input{grid-column:1/3}}
+.note{font-size:12px;color:var(--mu);background:var(--ac2);padding:8px 10px;border-radius:8px;margin-bottom:10px}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{text-align:left;padding:5px;border-bottom:1px solid var(--ln)}.wrap{overflow-x:auto}
+
+:root {
+  --on: #f5f9ff;
+  --bg: #edf4fc;
+  --card: rgba(255, 255, 255, 0.90);
+  --tx: #10243e;
+  --mu: #d6e2f0;
+  --ln: #cbdcf2;
+  --ac: #5b91d8;
+  --ac2: #dcecff;
+  --bgi: linear-gradient(
+    155deg,
+    #f0f7ff 0%,
+    #dcecff 45%,
+    #e9e5ff 100%
+  );
+}
+
+/* Automatic dark mode */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --on: #172c49;
+    --bg: #101c2e;
+    --card: rgba(25, 42, 66, 0.92);
+    --tx: #e8f2ff;
+    --mu: #a9c2df;
+    --ln: #304866;
+    --ac: #83b8ff;
+    --ac2: #243e60;
+    --bgi: linear-gradient(
+      155deg,
+      #101c2e 0%,
+      #172a45 55%,
+      #211d40 100%
+    );
+  }
+}
+
+:root {
+  --on: #f5f9ff;
+  --bg: #edf4fc;
+  --card: rgba(255, 255, 255, 0.92);
+  --tx: #111827;       /* Dark text */
+  --mu: #374151;       /* Dark muted text */
+  --ln: #cbdcf2;
+  --ac: #5b91d8;
+  --ac2: #dcecff;
+  --bgi: linear-gradient(
+    155deg,
+    #f0f7ff 0%,
+    #dcecff 45%,
+    #e9e5ff 100%
+  );
+}
+
+/* Make application text bold and dark */
+body {
+  color: #111827;
+  font-weight: 700;
+  background: var(--bg);
+  background-image: var(--bgi);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+/* Headings, labels, buttons, and form controls */
+h1, h2, h3, h4, h5, h6,
+label, button, input, select, textarea,
+th, td, p, li {
+  color: #111827;
+  font-weight: 700;
+}
+
+/* Keep placeholders readable but slightly softer */
+input::placeholder,
+textarea::placeholder {
+  color: #000000;
+  font-weight: 600;
+}
+h1{color:var(--ac)}.card{border-radius:16px;box-shadow:0 6px 20px rgba(214,39,122,.10);backdrop-filter:blur(6px)}
+nav button.on{color:var(--on);box-shadow:0 4px 12px rgba(214,39,122,.28)}button.b:not(.g){color:var(--on)}a.tag{text-decoration:none}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ac);color:var(--on);padding:10px 16px;border-radius:24px;opacity:0;transition:.3s;pointer-events:none;z-index:50;max-width:90vw;font-size:14px}
+#sum{display:none}
+@media print{body *{visibility:hidden}#sum,#sum *{visibility:visible}#sum{display:block;position:absolute;left:0;top:0;width:100%;background:#fff;color:#000}}
+
+/* Final visual system: calm clinical blue, clear hierarchy, less visual noise. */
+:root{
+  --bg:#f5f8fc;--card:#ffffff;--tx:#18324b;--mu:#61758b;--ln:#dce6f0;
+  --ac:#2563c7;--ac2:#e8f1ff;--wn:#a15c08;--wb:#fff5d7;--rd:#bd3d51;--rb:#ffedf0;
+  --bgi:radial-gradient(circle at 10% -10%,#e8f1ff 0%,transparent 34%),linear-gradient(145deg,#f9fbfe 0%,#f2f6fb 100%);
+}
+body{background:var(--bg);background-image:var(--bgi);color:var(--tx);font-weight:400;letter-spacing:.01em}
+header,main{max-width:1120px;padding-left:22px;padding-right:22px}header{padding-top:28px;padding-bottom:8px}
+h1{font-size:clamp(24px,3vw,32px);line-height:1.15;letter-spacing:-.03em;color:var(--tx);font-weight:750;margin-bottom:8px}
+header .sub{max-width:800px;font-size:14px;line-height:1.55;color:var(--mu)}
+h2{font-size:17px;line-height:1.3;margin:0 0 12px;font-weight:750;color:var(--tx)}
+h3{font-size:15px;font-weight:750;color:var(--tx)}.sub{color:var(--mu);font-weight:400}
+nav{position:sticky;top:0;z-index:20;max-width:none;margin:12px 0 22px;padding:10px 22px;background:rgba(245,248,252,.86);border-top:1px solid rgba(220,230,240,.65);border-bottom:1px solid rgba(220,230,240,.8);backdrop-filter:blur(14px)}
+nav button{border:1px solid var(--ln);background:rgba(255,255,255,.88);color:var(--mu);padding:9px 15px;border-radius:999px;cursor:pointer;white-space:nowrap;font:600 13px/1.2 inherit;transition:transform .15s,box-shadow .15s,background .15s,color .15s}
+nav button:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(28,61,97,.10);color:var(--tx)}nav button.on{background:var(--ac);color:#fff;border-color:var(--ac);box-shadow:0 5px 14px rgba(37,99,199,.22)}
+main{padding-bottom:56px}.card{background:rgba(255,255,255,.95);border:1px solid var(--ln);border-radius:18px;padding:19px 20px;margin-bottom:16px;box-shadow:0 8px 24px rgba(34,68,106,.07);backdrop-filter:blur(8px)}
+.grid{gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}.row{gap:10px}
+button.b{border:1px solid var(--ac);background:var(--ac);color:#fff;padding:9px 14px;border-radius:10px;cursor:pointer;font:650 13px/1.2 inherit;box-shadow:0 4px 10px rgba(37,99,199,.14);transition:transform .15s,box-shadow .15s,background .15s}
+button.b:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 7px 16px rgba(37,99,199,.2);background:#1d56ae}button.b.g{background:transparent;color:var(--ac);box-shadow:none}button.b:disabled{opacity:.55;cursor:wait;transform:none;box-shadow:none}
+.tag{font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;background:var(--ac2);color:var(--ac);white-space:nowrap}.tag.w{background:var(--wb);color:var(--wn)}.tag.r{background:var(--rb);color:var(--rd)}
+input,select,textarea{font:400 14px/1.45 inherit;color:var(--tx);background:#fff;border:1px solid #cbd8e6;border-radius:10px;padding:9px 10px;width:100%;transition:border-color .15s,box-shadow .15s}input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 3px rgba(37,99,199,.14)}
+textarea{min-height:126px;resize:vertical}label{font-size:12px;color:var(--mu);font-weight:650;display:block;margin-top:10px}.gr{grid-template-columns:minmax(150px,2fr) 118px 2fr;gap:9px;padding:8px 0;border-bottom:1px solid #e8eef5}.hl{color:var(--rd);font-weight:750}
+.note{font-size:13px;color:#48627c;background:#f1f6fd;border:1px solid #dce9f8;border-left:4px solid var(--ac);padding:10px 12px;border-radius:10px;margin-bottom:12px}.wrap{overflow-x:auto}table{font-size:13px}td,th{padding:9px 7px;border-bottom:1px solid #e8eef5}th{color:var(--mu);font-weight:700}
+#toast{background:var(--tx);box-shadow:0 8px 24px rgba(16,38,64,.22);font-weight:650}
+/* Focused nurse workspace: intake tools stay together, CRF review stays wide. */
+.visit-intake-grid{grid-template-columns:minmax(0,1fr);align-items:start;gap:18px;margin-bottom:18px}
+.visit-intake-grid>.card{margin-bottom:0;min-width:0}
+.visit-intake-grid>.card:nth-child(1){border-top:3px solid #2563c7}
+.visit-intake-grid>.card:nth-child(2){border-top:3px solid #38a58f}
+.visit-intake-grid>.card:nth-child(3){grid-column:1/-1}
+.visit-intake-grid h2{display:flex;align-items:center;gap:8px;min-height:24px}
+.visit-intake-grid .note{line-height:1.55}
+.recorder-panel{padding:14px 16px;border:1px solid #d9e7f5;border-radius:14px;background:linear-gradient(135deg,#f7fbff,#eef7f5)}
+.recorder-panel .row{align-items:center}
+.recorder-panel .tag{display:inline-flex;align-items:center}
+.pro-toolbar{margin:10px 0 16px}
+.pro-section{padding:16px 0;border-top:1px solid #e2eaf2}
+.pro-section:first-of-type{border-top:0;padding-top:4px}
+.pro-section h3{margin:0 0 4px;color:var(--ac);font-size:16px}
+.pro-instructions{margin:0 0 10px;line-height:1.55}
+.pro-ta{color:#1f7b72;font-weight:600}
+.pro-question{padding:10px 0;border-bottom:1px solid #edf1f5}
+.pro-question label{font-size:13px;line-height:1.55;color:var(--tx);font-weight:650;margin:0 0 6px}
+.pro-number{color:var(--ac);font-weight:800}
+.pro-answer{max-width:560px}
+ .pro-register{overflow:hidden}.pro-register table{min-width:820px;width:100%}.pro-register th,.pro-register td{vertical-align:top}.pro-register .pro-review-button{font-size:11px;margin-top:5px;min-height:24px;padding:0 7px}
+@media(max-width:760px){.visit-intake-grid{grid-template-columns:1fr;gap:14px}.visit-intake-grid>.card:nth-child(3){grid-column:auto}}
+@media(max-width:560px){header,main{padding-left:14px;padding-right:14px}header{padding-top:20px}nav{padding-left:14px;padding-right:14px;margin-bottom:16px}.card{padding:15px 14px;border-radius:15px}.gr{grid-template-columns:1fr 1fr}.gr input{grid-column:1/3}}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1b2a;--card:#172638;--tx:#eaf2fb;--mu:#a9bad0;--ln:#2a4059;--ac:#73a9ff;--ac2:#1b3554;--wb:#403417;--rb:#421e28;--bgi:radial-gradient(circle at 10% -10%,#18365a 0%,transparent 34%),linear-gradient(145deg,#101d2e 0%,#0d1724 100%)}nav{background:rgba(15,27,42,.86)}nav button{background:rgba(23,38,56,.92);color:var(--mu)}input,select,textarea{background:#122235;border-color:#36506b}.note{background:#142d49;color:#b9cee6;border-color:#2f5277}td,th{border-color:#2a4059}}
+</style></head><body>
+<header><h1>Survivorship Care Workflow Assistant</h1>
+<div class="sub">Tele-follow-up visit proforma (Breast · Colorectal · Gastric · Ovarian) · clinician review flags are based on the configured local thresholds.</div></header>
+<nav id="nav"></nav><main id="app"></main><div id="sum"></div><div id="toast"></div>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const SEV=["Nil","Mild","Moderate","Severe"];
+const PSY1=["Anxiety or depression","Emotional and mental health","Fatigue","Fertility","Financial advice or assistance","Insurance","Memory or concentration loss","Parenting","Physical functioning","Work place issues","Marital issues","Sexual functioning","Family issues","Social stigma/issues","Weight changes"];
+const PSY2=["Weight changes","Anxiety or depression","Sleep disturbances","Memory or concentration loss","Physical functioning","Sexual functioning","Fertility issues","Family issues","Marital issues","Parenting issues","Social stigma/issues","Financial or insurance"];
+// "label|keyword" — keyword is used by the transcript auto-fill
+const CA={
+B:{n:"Breast",psy:PSY1,tests:["History & physical examination","Mammography (annual)"],
+ rec:["New lumps (underarm or neck)|lump","Rash or skin changes on breast/chest wall|rash","Chest pain|chest","Change in breast contour/shape/size|shape","Swelling of breast or arm|swell"],
+ se:["Skin changes around the breast|skin","Breast shape changes|shape","Soreness or pain|sore","Restricted arm/shoulder movement|shoulder","Menopausal symptoms|menopaus","Hair loss|hair","Nail changes|nail","Mouth sores|mouth","Appetite or weight changes|appetite","Nausea and vomiting|vomit","Hot flashes / vaginal dryness|hot flash","Nerve damage (numbness, tingling)|numb","Chemo brain (concentration/memory)|memory","Fatigue|tired|fatigue","Hand-foot syndrome|hand","Heart problems|palpitat"]},
+C:{n:"Colorectal",psy:PSY2,tests:["CEA","CT scan","Colonoscopy"],
+ rec:["Abdominal pain|abdominal pain","Change in bowel habit|bowel","Pain in back or pelvis|back pain","Loss of appetite|appetite","Rectal bleeding|bleeding","Weight loss|weight","Bloating|bloat","Dyspnea|breath","Anemia|anemi"],
+ se:["Abdominal pain|abdominal pain","Fecal incontinence|incontinen","Constipation|constipat","Nausea and vomiting|vomit","Pelvic floor pain|pelvic","Perianal skin irritation|perianal","Soreness|sore","Rectal pain|rectal pain"]},
+G:{n:"Gastric",psy:PSY2,tests:["History & physical examination","Post-treatment EGD"],
+ rec:["Loss of appetite|appetite","Weight loss|weight","Abdominal symptoms|abdominal","Heartburn|heartburn","Nausea/Vomiting|vomit","Blood in stool|blood","Low platelet count|platelet"],
+ se:["Poor appetite and weight loss|appetite","Swallowing difficulties|swallow","Reflux and choking|reflux","Dumping syndrome|dumping","Anaemia and osteoporosis|anaemi"]},
+O:{n:"Ovarian",psy:PSY1,tests:["History & physical examination","Pelvic examination","USG abdomen"],
+ rec:["Pelvic pain|pelvic","Bloating|bloat","Early satiety|full quickly","Obstruction|obstruct","Unexplained weight loss|weight","Fatigue|tired|fatigue","Constipation|constipat","Frequent/urgent urination|urinat","Trouble eating / feeling full fast|full"],
+ se:["Neutropenia (febrile / non-febrile)|fever","Peripheral neuropathy|numb","Bowel disturbance|bowel","Hypersensitivity / skin rash|rash","Thrombocytopenia|platelet","Thrombosis|clot","Bleeding|bleed","Hypertension|blood pressure","Proteinuria|protein","Fatigue|tired|fatigue"]}};
+const HP=["Alcohol use","Smoking cessation","Physical activity","Diet and nutrition","Weight management"];
+const QS=["EORTC QLQ-C30","ScoRe-CS","Cancer Worry Scale (CWS)","Telehealth satisfaction scale"];
+const SAMPLE={B:"Nurse: Do you consent to this call being recorded?\nPatient: Yes.\nPatient: I noticed a new lump near my armpit last week. I have severe pain in the chest, around 8. Fatigue is moderate. No hair loss now. I have mild numbness in my fingers. ECOG 1.",
+C:"Nurse: Do you consent to recording?\nPatient: Yes.\nPatient: Bowel habit has changed, moderate. I had rectal bleeding twice this week. No abdominal pain. Mild constipation. ECOG 1.",
+G:"Nurse: Do you consent to recording?\nPatient: Yes.\nPatient: My appetite is poor and I lost weight, quite a lot. Mild reflux at night. No vomiting. ECOG 2.",
+O:"Nurse: Do you consent to recording?\nPatient: Yes.\nPatient: I have bloating, moderate, and pelvic pain around 6. Feeling full quickly. Fatigue is severe. ECOG 2."};
+function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function ca(site){site=String(site||"");return/breast/i.test(site)?"B":/colo|colon|rect/i.test(site)?"C":/stomach|gastric/i.test(site)?"G":/ovar/i.test(site)?"O":"B"}
+function demo(){const d=n=>{const x=new Date();x.setDate(x.getDate()+n);return iso(x)};
+ return[["DEMO-B-001","Demo Patient A",52,"F","Breast carcinoma",1,"T1","Nurse 1"],["DEMO-C-002","Demo Patient B",61,"M","Colon carcinoma",0,"T2","Nurse 2"],["DEMO-G-003","Demo Patient C",58,"M","Stomach carcinoma",-2,"T1","Nurse 1"],["DEMO-O-004","Demo Patient D",47,"F","Ovarian carcinoma",3,"T3","Nurse 2"]]
+ .map(a=>({id:a[0],name:a[1],age:a[2],sex:a[3],site:a[4],c:ca(a[4]),phone:"—",tag:a[6],date:d(a[5]),nurse:a[7],sci:"Dr. Demo",time:"",mode:"",st:"Scheduled"}))}
+let S={tab:"Schedule",p:null,v:null,pts:demo(),imp:false,q:"",nf:"",pf:"all",vf:"all",o:{},rules:{rec:2,se:3,ecog:3},visits:{},log:[],ov:{},sum:0,pro:{url:["","","",""],ent:["","","",""],sc:{}},notes:[],reports:{},locked:1,shares:[],crfs:{},audioEndpoint:"/api/transcribe"};
+const ls={ok:true,get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){ls.ok=false}}};
+try{localStorage.setItem("_t","1");localStorage.removeItem("_t")}catch(e){ls.ok=false}
+let KEY=null,IDLE=0,PQ=Promise.resolve();
+const b64=u=>{u=new Uint8Array(u);let s="";for(const x of u)s+=String.fromCharCode(x);return btoa(s)},ub=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function dk(pw,salt){const b=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);return crypto.subtle.deriveKey({name:"PBKDF2",salt,iterations:250000,hash:"SHA-256"},b,{name:"AES-GCM",length:256},false,["encrypt","decrypt"])}
+async function persist(){if(!KEY)return;try{const iv=crypto.getRandomValues(new Uint8Array(12)),c=await crypto.subtle.encrypt({name:"AES-GCM",iv},KEY.k,new TextEncoder().encode(JSON.stringify({rules:S.rules,log:S.log.slice(0,300),visits:S.visits,ov:S.ov,pro:S.pro,notes:S.notes.slice(0,100),shares:S.shares,crfs:S.crfs,audioEndpoint:S.audioEndpoint,pts:S.pts,imp:S.imp,vf:S.vf})));ls.set("sva3",JSON.stringify({s:b64(KEY.s),i:b64(iv),c:b64(c)}))}catch(e){}}
+function save(){PQ=PQ.then(persist)}
+function loadState(d){S.rules=d.rules||S.rules;S.log=d.log||[];S.visits=d.visits||{};S.ov=d.ov||{};S.pro=d.pro||S.pro;S.notes=d.notes||[];S.shares=d.shares||[];S.crfs=d.crfs||{};S.audioEndpoint=d.audioEndpoint||S.audioEndpoint;S.pts=Array.isArray(d.pts)&&d.pts.length?d.pts:S.pts;S.imp=!!d.imp;S.vf=d.vf||S.vf;S.pts.forEach(applyOv)}
+function lockUI(){const has=ls.get("sva3");return`<div class="card" style="max-width:430px;margin:40px auto"><h2>${has?"Unlock":"Create a passphrase"}</h2><div class="sub">${has?"Enter your passphrase to decrypt the data saved in this browser.":"Everything saved here (visit history, audit log, settings, uploaded reports) is encrypted with this passphrase (AES-256-GCM) and stays on this device. It cannot be recovered if you forget it."}</div>${ls.ok?"":'<div class="note" style="margin-top:8px">Browser storage is unavailable here, so nothing will be saved.</div>'}<input id="pw" type="password" placeholder="Passphrase (8+ characters)" onkeydown="if(event.key==='Enter')unlock()" style="margin:10px 0"><button class="b" onclick="unlock()">${has?"Unlock":"Create & continue"}</button></div>`}
+async function unlock(){const pw=$("#pw").value,has=ls.get("sva3");if(pw.length<8){alert("Use at least 8 characters.");return}
+ try{if(has){const o=JSON.parse(has),sl=ub(o.s),k=await dk(pw,sl),pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:ub(o.i)},k,ub(o.c));KEY={k,s:sl};loadState(JSON.parse(new TextDecoder().decode(pt)))}
+ else{const sl=crypto.getRandomValues(new Uint8Array(16));KEY={k:await dk(pw,sl),s:sl};const old=ls.get("sva2");if(old){try{loadState(JSON.parse(old))}catch(e){}}}}catch(e){alert("Wrong passphrase.");return}
+ try{localStorage.removeItem("sva2")}catch(e){}
+ S.locked=0;await restoreFiles();if(!IDLE){IDLE=1;let t;const r=()=>{clearTimeout(t);t=setTimeout(()=>location.reload(),600000)};["click","keydown","touchstart"].forEach(e=>addEventListener(e,r));r()}
+ save();scan();render()}
+const idb=()=>new Promise((res,rej)=>{const r=indexedDB.open("sva-files",1);r.onupgradeneeded=()=>r.result.createObjectStore("f",{keyPath:"id"});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+async function storeReport(pid,f){const dt=(($("#rd")||{}).value)||"";try{const iv=crypto.getRandomValues(new Uint8Array(12)),data=await crypto.subtle.encrypt({name:"AES-GCM",iv},KEY.k,await f.arrayBuffer()),d=await idb();await new Promise(r=>{const t=d.transaction("f","readwrite");t.objectStore("f").put({id:crypto.randomUUID(),pid,name:f.name,size:f.size,type:f.type,date:dt,t:new Date().toLocaleString(),iv,data});t.oncomplete=r})}catch(e){toast("Report could not be stored encrypted: "+e.message)}}
+async function restoreFiles(){try{const d=await idb(),all=await new Promise(res=>{const q=d.transaction("f").objectStore("f").getAll();q.onsuccess=()=>res(q.result)});for(const r of all){try{const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:r.iv},KEY.k,r.data);(S.reports[r.pid]=S.reports[r.pid]||[]).push({name:r.name,size:r.size,url:URL.createObjectURL(new Blob([pt],{type:r.type})),date:r.date,t:r.t})}catch(e){}}}catch(e){}}
+async function clearAll(){if(!confirm("Permanently delete ALL saved data from this browser — encrypted records, uploaded reports and the passphrase?"))return;try{localStorage.removeItem("sva3");localStorage.removeItem("sva2")}catch(e){}try{indexedDB.deleteDatabase("sva-files")}catch(e){}setTimeout(()=>location.reload(),300)}
+function shareV(){return`<div class="card"><h2>Share de-identified data</h2><div class="note">Minimum-necessary export: study code, cancer, visit tag, visit month, ECOG, open-flag count and symptom severities. Names, phone numbers, ages, free text, transcripts, advice and uploaded reports are never included. Recipient, purpose and approval reference are recorded in the sharing log. Apply your own data-sharing agreement before sending anything.</div>
+ <label>Recipient (person / organisation)</label><input id="sr"><label>Purpose</label><input id="sp"><label>Approval / agreement reference (ethics or data-sharing agreement no.)</label><input id="sa"><label><input type="checkbox" id="sc1" style="width:auto"> Participants' consent covers this sharing</label><label><input type="checkbox" id="se" style="width:auto" checked> Encrypt the export with a separate passphrase (give it to the recipient by another channel)</label><input id="spw" type="password" placeholder="Export passphrase (8+ characters)" style="margin-top:4px">
+ <div style="margin:8px 0"><button class="b" onclick="doShare()">Prepare export</button></div><textarea id="so" readonly placeholder="Export appears here — select all and copy">${esc(S.shout||"")}</textarea>
+ <h2 style="margin-top:14px">Decrypt a received export</h2><textarea id="di" placeholder="Paste the encrypted export"></textarea><input id="dp" type="password" placeholder="Passphrase" style="margin:4px 0"><button class="b g" onclick="doDec()">Decrypt</button><textarea id="do" readonly></textarea></div>
+ <div class="card wrap"><h2>Sharing log</h2><table><tr><th>When</th><th>Recipient</th><th>Purpose</th><th>Approval ref</th><th>Rows</th><th>Encrypted</th></tr>${S.shares.map(x=>`<tr><td>${esc(x.t)}</td><td>${esc(x.rc)}</td><td>${esc(x.pu)}</td><td>${esc(x.ap)}</td><td>${x.n}</td><td>${x.en}</td></tr>`).join("")||'<tr><td colspan="6" class="sub">Nothing shared yet.</td></tr>'}</table></div>`}
+async function doShare(){const g=i=>$(i).value.trim(),rc=g("#sr"),pu=g("#sp"),ap=g("#sa");if(!rc||!pu||!ap){alert("Recipient, purpose and approval/agreement reference are all required.");return}if(!$("#sc1").checked){alert("Confirm that participants' consent covers this sharing.");return}
+ const rows=[["study_code","cancer","visit_tag","visit_month","ecog","open_flags","symptoms_non_nil"]];Object.entries(S.visits).forEach(([id,l])=>l.forEach(r=>rows.push([id,r.c||"",r.tag,(r.iso||"").slice(0,7),r.ecog??"",r.nf,r.sy||""])));if(rows.length<2){alert("No saved visits to share.");return}
+ let out=rows.map(r=>r.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(",")).join("\n");const en=$("#se").checked;
+ if(en){const pw=$("#spw").value;if(pw.length<8){alert("The export passphrase needs 8+ characters.");return}const sl=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12)),k=await dk(pw,sl),c=await crypto.subtle.encrypt({name:"AES-GCM",iv},k,new TextEncoder().encode(out));out=JSON.stringify({v:1,s:b64(sl),i:b64(iv),c:b64(c)})}
+ S.shares.unshift({t:new Date().toLocaleString(),rc,pu,ap,n:rows.length-1,en:en?"Yes":"No"});log(`De-identified export prepared: ${rows.length-1} rows for ${rc} (ref ${ap})`);S.shout=out;render()}
+async function doDec(){try{const o=JSON.parse($("#di").value),k=await dk($("#dp").value,ub(o.s));$("#do").value=new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:ub(o.i)},k,ub(o.c)))}catch(e){$("#do").value="Could not decrypt — check the passphrase and the pasted text."}}
+function log(a){S.log.unshift({t:new Date().toLocaleString(),a});save()}
+function applyOv(p){const o=S.ov[p.id+p.tag];if(o){p.date=o.date||p.date;p.st=o.st||p.st}}
+S.pts.forEach(applyOv);
+// ---------- spreadsheet import (encrypted locally so the schedule survives reloads) ----------
+function pd(x){if(x instanceof Date&&!isNaN(x))return iso(x);if(typeof x=="string"){const m=x.trim().match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})$/);if(m)return iso(new Date(+m[3],+m[2]-1,+m[1]))}return""}
+function imp(f){if(!f)return;const r=new FileReader();r.onload=e=>{try{
+ const wb=XLSX.read(e.target.result,{type:"array",cellDates:true}),out=[];
+ wb.SheetNames.forEach(sn=>{const rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:true,defval:null});
+  const hi=rows.findIndex(r=>r.some(c=>/participant/i.test(String(c||""))));if(hi<0)return;
+  const H=rows[hi].map(h=>String(h||"").toLowerCase().replace(/\s+/g," ").trim()),col=re=>H.findIndex(h=>re.test(h));
+  const c={id:col(/participant/),nm:col(/patient name/),age:col(/^age/),sx:col(/gender/),site:col(/tumou?r site|type of cancer/),ph:col(/phone/),dt:col(/^t\d date|date of schedules/),nu:col(/^nurse incharge/),sc:col(/project scientist|scientist incharge/),tm:col(/^time/),md:col(/mode|node of call/)};
+  const tg=c.dt>=0?(H[c.dt].match(/t(\d)/)||[0,"1"])[1]:"1";
+  rows.slice(hi+1).forEach(r=>{const id=r[c.id];if(!id||!String(id).trim())return;
+   const p={id:String(id).trim(),name:r[c.nm]||"",age:r[c.age]||"",sex:r[c.sx]||"",site:r[c.site]||"",c:ca(r[c.site]),phone:r[c.ph]||"",tag:"T"+tg,date:pd(r[c.dt]),nurse:String(r[c.nu]||"").trim(),sci:String(r[c.sc]||"").trim(),time:r[c.tm]||"",mode:String(r[c.md]||"").trim(),st:"Scheduled"};applyOv(p);out.push(p)})});
+ if(!out.length){alert("No participant rows found. Expected a 'Participant ID' header column.");return}
+ S.pts=out;S.imp=true;S.nf="";log(`Imported ${out.length} appointment rows from spreadsheet`);save();scan();render()}catch(x){alert("Could not read that file: "+x.message)}};r.readAsArrayBuffer(f)}
+// ---------- visit state ----------
+function newV(p){return{h:{pl:0,tag:p.tag||"T1",mode:p.mode||"Audio call",st:"",en:"",pv:p.nurse||""},consent:0,tx:"",etx:"",cc:["","",""],rec:{},se:{},adv:{},ai:{},aiFlags:null,other:"",ecog:"",hcp:{y:0,r:""},q:{},psy:{},hp:{},tests:{},meds:"",d:{opd:0,opdW:"",opdD:"",pcp:0,pcpW:"",tvc:0,tvcW:"",nx:0,nxD:"",nxT:"",rm:""},ovr:{}}}
+function start(i){S.p=S.pts[i];S.v=newV(S.p);S.sum=0;const ps=S.pro.sc[S.p.id];if(ps)QS.forEach((q,j)=>{if(ps[j]!=null&&ps[j]!==""){S.v.q["y"+j]=1;S.v.q["s"+j]=String(ps[j]);S.v.q["f"+j]=1}});S.tab="Tele-visit";log(`Visit started: ${S.p.id} (${CA[S.p.c].n}, ${S.v.h.tag})`);render()}
+function setSev(k,i,v){S.v[k][i]=+v;delete S.v.ai[k+i];log(`Nurse set ${k==="rec"?"recurrence":"side-effect"} symptom "${CA[S.p.c][k][i].split("|")[0]}" = ${SEV[v]} (${S.p.id})`);render()}
+function flags(){const v=S.v,c=CA[S.p.c],f=[];
+ c.rec.forEach((s,i)=>{const x=+v.rec[i]||0;if(x>=S.rules.rec)f.push({k:"rec"+i,t:`Recurrence symptom: ${s.split("|")[0]} — ${SEV[x]}`,r:1})});
+ c.se.forEach((s,i)=>{const x=+v.se[i]||0;if(x>=S.rules.se)f.push({k:"se"+i,t:`Side effect: ${s.split("|")[0]} — ${SEV[x]}`})});
+ if(v.ecog!==""&&+v.ecog>=S.rules.ecog)f.push({k:"ecog",t:`ECOG ${v.ecog} (threshold ≥ ${S.rules.ecog})`});return f}
+async function requestAIFlags(){
+ const v=S.v,p=S.p,c=CA[p.c];if(!v||!p)return;
+ const source=String(v.tx||"").trim(),english=String(v.etx||"").trim();
+ if(!source&&!english&&!Object.keys(v.rec).length&&!Object.keys(v.se).length&&v.ecog===""){alert("Record or paste the transcript, or complete the CRF values, before running AI flag review.");return}
+ const rows=(kind,list)=>(list||[]).map((s,i)=>({field:s.split("|")[0],severity:SEV[+v[kind][i]||0],advice:cleanAdvice(v.adv[kind+i])}));
+ const payload={cancer:c.n,transcript:source,english_transcript:english,complaints:(v.cc||[]).filter(Boolean),recurrence:rows("rec",c.rec),side_effects:rows("se",c.se),ecog:v.ecog||"",other_symptoms:v.other||"",medications:v.meds||"",rule_flags:flags().map(x=>x.t)};
+ v.aiFlags={status:"running",issues:[],summary:"AI is reviewing the transcript and CRF…"};render();
+ try{
+   const response=await fetch("/api/flag-issues",{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},credentials:"same-origin",body:JSON.stringify(payload)});
+   let body={};try{body=await response.json()}catch(e){}
+   if(!response.ok)throw new Error(body.detail||"AI flagging failed.");
+   v.aiFlags=Object.assign({status:"complete",generatedAt:new Date().toLocaleString()},body);
+   log(`AI flag review completed with ${(body.issues||[]).length} issue(s); nurse review required (${p.id})`);
+ }catch(error){
+   v.aiFlags={status:"error",issues:[],summary:"AI flag review could not be completed.",message:error.message||"Unknown error"};
+   log(`AI flag review failed: ${error.message||"unknown error"} (${p.id})`);
+ }
+ render();
+}
+window.requestAIFlags=requestAIFlags;
+function score(v,cc){const c=CA[cc];let x=0,m=20;c.rec.forEach((_,i)=>{x+=3*(+v.rec[i]||0);m+=9});c.se.forEach((_,i)=>{x+=(+v.se[i]||0);m+=3});x+=5*Math.min(+v.ecog||0,4);return Math.round(100*x/m)}
+function band(s){return s>=35?["High","r"]:s>=15?["Moderate","w"]:["Low",""]}
+const TAM={"keywords":{"lump":["கட்டி","லம்ப்"],"rash":["சொறி","தடிப்பு","ராஷ்"],"chest":["re:நெஞ்சு.{0,12}வலி","re:நெஞ்சு.{0,12}வலிக்க","மார்பு வலி"],"shape":["வடிவம்","ஷேப்","சைஸ்"],"swell":["வீக்கம்","வீங்க","வீங்கி","ஸ்வெல்லிங்"],"skin":["தோல்","தோலில்"],"sore":["புண்","எரிச்சல்"],"shoulder":["தோள்பட்டை","தோள்"],"menopaus":["மெனோபாஸ்","மாதவிடாய் நின்று"],"hair":["முடி"],"nail":["நகம்","நகங்கள்"],"mouth":["வாய்ப்புண்","வாயில் புண்","வாய்"],"appetite":["பசி","அப்பெட்டைட்","சாப்பிட முடிய","சாப்பிட பிடிக்க"],"vomit":["வாந்தி","வாமிட்","குமட்டல்"],"numb":["மரத்து","உணர்வின்மை","மதமதப்பு","கூச்சம்"],"memory":["மறதி","ஞாபகம்","நினைவு"],"tired":["களைப்பு","சோர்வு","டயர்டு","பலவீனம்","வீக்னெஸ்"],"fatigue":["களைப்பு","சோர்வு","டயர்டு","பலவீனம்","வீக்னெஸ்"],"palpitat":["படபடப்பு"],"abdominal pain":["re:வயிறு.{0,12}வலி","re:வயிற்று.{0,12}வலி"],"abdominal":["வயிற்று","வயிறு"],"bowel":["மலம்","மோஷன்"],"back pain":["re:முதுகு.{0,12}வலி","re:இடுப்பு.{0,12}வலி"],"bleed":["இரத்தப்போக்கு","ரத்தப்போக்கு","பிளீடிங்"],"bleeding":["இரத்தப்போக்கு","ரத்தப்போக்கு","பிளீடிங்"],"weight":["எடை","வெயிட்","மெலிந்த"],"bloat":["உப்புசம்","வயிறு உப்ப","கேஸ்","காஸ்"],"breath":["மூச்சு"],"anemi":["இரத்த சோகை","ரத்த சோகை","அனீமியா"],"anaemi":["இரத்த சோகை","ரத்த சோகை","அனீமியா"],"constipat":["மலச்சிக்கல்","கான்ஸ்டிபேஷன்"],"pelvic":["re:அடிவயிற்?று?.{0,12}வலி","re:இடுப்பு.{0,12}வலி"],"perianal":["ஆசனவாய் அரிப்பு","ஆசனவாய் எரிச்சல்"],"rectal pain":["re:ஆசனவாய்.{0,12}வலி","re:மலவாய்.{0,12}வலி"],"heartburn":["நெஞ்செரிச்சல்","ஹார்ட்பர்ன்"],"reflux":["புளித்த ஏப்பம்","நெஞ்செரிச்சல்","ரிஃப்ளக்ஸ்"],"blood":["இரத்தம்","ரத்தம்"],"blood pressure":["பிரஷர்","இரத்த அழுத்தம்","ரத்த அழுத்தம்"],"platelet":["பிளேட்லெட்","தட்டணு"],"swallow":["விழுங்க","விழுங்குவ"],"obstruct":["அடைப்பு"],"urinat":["சிறுநீர்","யூரின்"],"fever":["காய்ச்சல்","ஜுரம்","ஃபீவர்","பீவர்"],"clot":["ரத்த உறைவு","இரத்த உறைவு"]},"negation":["இல்லை","இல்ல","கிடையாது","வில்லை","குறையல","வரல","போகல"],"severe":["ரொம்ப","மிகவும்","அதிகம்","கடுமை","தாங்க முடிய","பயங்கர","மோசம்","சகிக்க முடிய"],"moderate":["மிதமான","நடுத்தர","ஓரளவு"],"units":["day","time","week","month","year","hour","kg","kilo","percent","once","twice","நாள்","நாளா","முறை","தடவை","வாரம்","மாதம்","வருடம்","மணி","கிலோ","சதவீதம்"],"numberList":[["இரண்டு",2],["ரெண்டு",2],["மூன்று",3],["நான்கு",4],["ஒன்பது",9],["ஐந்து",5],["அஞ்சு",5],["எட்டு",8],["பத்து",10],["மூணு",3],["நாலு",4],["ஆறு",6],["ஏழு",7]]};
+// English clinical synonyms used to match the CRF's important words in speech.
+const CRF_ALIASES={
+ lump:["mass","node","swollen node","underarm lump","neck lump"],
+ rash:["skin rash","redness","itching","skin change"],
+ chest:["chest pain","breast pain","pain in chest"],
+ shape:["contour","breast size","change in size","change in shape"],
+ swell:["swollen","edema","arm swelling","breast swelling"],
+ skin:["skin change","skin lesion","dry skin"],
+ sore:["soreness","painful","tenderness"],
+ shoulder:["arm movement","shoulder movement","stiff shoulder"],
+ menopaus:["menopause","hot flush","hot flashes","vaginal dryness"],
+ hair:["hair fall","alopecia"],
+ nail:["nail change","brittle nails"],
+ mouth:["mouth ulcer","oral sore","mouth sores"],
+ appetite:["poor appetite","loss of appetite","weight change","weight loss"],
+ vomit:["nausea","vomiting","feeling sick"],
+ numb:["numbness","tingling","pins and needles","neuropathy"],
+ memory:["memory loss","poor concentration","chemo brain"],
+ tired:["fatigue","tiredness","weakness","low energy"],
+ fatigue:["fatigue","tiredness","weakness","low energy"],
+ palpitat:["palpitations","heart racing","irregular heartbeat"],
+ "abdominal pain":["stomach pain","tummy pain","abdominal pain"],
+ abdominal:["stomach symptoms","tummy symptoms","abdominal symptoms"],
+ bowel:["bowel change","bowel habit","loose stool","diarrhea","diarrhoea"],
+ "back pain":["back pain","pelvic pain","hip pain"],
+ bleeding:["rectal bleeding","blood in stool","blood in the stool"],
+ weight:["weight loss","lost weight","unexplained weight loss"],
+ bloat:["bloating","bloated"],
+ breath:["shortness of breath","breathlessness","difficulty breathing","dyspnea"],
+ anemi:["anemia","anaemia","low hemoglobin","low haemoglobin"],
+ anaemi:["anemia","anaemia","low hemoglobin","low haemoglobin"],
+ constipat:["constipation","hard stool"],
+ pelvic:["pelvic pain","lower abdominal pain"],
+ perianal:["perianal irritation","anal irritation","anal itching"],
+ "rectal pain":["rectal pain","anal pain"],
+ heartburn:["heartburn","acid reflux"],
+ reflux:["reflux","choking","regurgitation"],
+ blood:["blood in stool","blood in faeces","blood in feces"],
+ "blood pressure":["high blood pressure","hypertension","raised pressure"],
+ platelet:["platelet count","low platelets","thrombocytopenia"],
+ swallow:["difficulty swallowing","trouble swallowing","swallowing difficulty"],
+ obstruct:["obstruction","blocked bowel","blockage"],
+ urinat:["urination","frequent urination","urgent urination","urinary"],
+ fever:["fever","febrile","high temperature"],
+ clot:["blood clot","thrombosis","thrombus"],
+ "hot flash":["hot flash","hot flashes","hot flush","vaginal dryness"],
+ hand:["hand foot syndrome","hand-foot syndrome","foot syndrome"],
+ incontinen:["incontinence","loss of bowel control","leakage"],
+ dumping:["dumping syndrome","after eating weakness"],
+ "full quickly":["early satiety","feel full quickly","full after a little"],
+ full:["feel full quickly","early satiety","feeling full"],
+ protein:["protein in urine","proteinuria"]
+};
+const escRe=t=>t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+const kwRe=s=>{const p=[];s.split("|").slice(1).forEach(k=>{p.push(escRe(k));(CRF_ALIASES[k]||[]).forEach(t=>p.push(t.startsWith("re:")?t.slice(3):escRe(t)));(TAM.keywords[k]||[]).forEach(t=>p.push(t.startsWith("re:")?t.slice(3):escRe(t)))});return new RegExp(p.join("|"),"i")};
+const clauses=t=>t.split(/[.\n?!]+|\bbut\b|ஆனா(?:ல்)?/).filter(x=>x.trim());
+function explicitAdviceFromTranscript(text,c){
+ const out={},parts=clauses(String(text||"")),groups=[["rec",c.rec||[]],["se",c.se||[]]];let last=null,lastIndex=-99;
+ const targetFor=part=>{for(const [kind,list] of groups)for(let i=0;i<list.length;i++){if(kwRe(list[i]).test(part))return{kind,index:i}}return null};
+ const adviceIn=part=>{
+   if(/\b(?:no advice|no recommendation|not advised)\b/i.test(part))return"";
+   if(/(?:ஆலோசனை|அறிவுரை|சொன்னார்கள்|சொல்லப்பட்டது|பரிந்துரை).*(?:இல்லை|கிடையாது)/i.test(part))return"";
+   const direct=part.match(/\b(?:advice|advised|recommend(?:ed)?|instructed|told)\b\s*(?:the patient\s*)?(?:to\s*|that\s*)?(.+)$/i);
+   let value=direct?direct[1]:"";
+   if(!value){const action=part.match(/\b(?:observe|monitor|review|follow[- ]?up|return|contact|avoid|continue|stop|take|use|eat|drink|exercise|seek|consult|repeat|check)\b[^.!?]*/i);value=action?action[0]:""}
+   if(!value){const tamilAction=part.match(/(?:தவிர்க்க(?:வும்|வும்)?|தவிருங்கள்|சாப்பிட(?:வும்|வேண்டும்)?|குடிக்க(?:வும்|வேண்டும்)?|தொடர்ந்து\s+செய்ய|நிறுத்த(?:வும்|வேண்டும்)?|கவனிக்க(?:வும்|வேண்டும்)?|கண்காணிக்க(?:வும்|வேண்டும்)?|பரிசோதனை\s+செய்ய|மருத்துவரை\s+(?:சந்திக்க|தொடர்பு கொள்ள)|மீண்டும்\s+வர|வரவும்|அழைக்கவும்)[^.!?]*/i);value=tamilAction?tamilAction[0]:""}
+   value=String(value||"").replace(/^[:\-\s]+/,"").replace(/[.;]+$/g,"").trim();
+   if(value.length<4||/^(?:s|a|an|is|was|to|that|the)$/i.test(value))return"";
+   return value.slice(0,180);
+ };
+ parts.forEach((part,index)=>{const target=targetFor(part);if(target){last=target;lastIndex=index}const value=adviceIn(part),chosen=target||((index-lastIndex)<=1?last:null);if(value){if(chosen&&!out[chosen.kind+chosen.index])out[chosen.kind+chosen.index]=value;else if(!chosen&&!out.__general)out.__general=value}});
+ return out;
+}
+window.explicitAdviceFromTranscript=explicitAdviceFromTranscript;
+function applyTranscriptAdvice(v,c,text){
+ Object.keys(v.adv||{}).forEach(key=>{
+  const current=String(v.adv[key]||"").trim();
+  if(!/^General advice from transcript:/i.test(current))return;
+  const cleaned=current.replace(/^General advice from transcript:\s*/i,"").trim();
+  if(!cleaned||/^(?:s|a|an|is|was|to|that|the)$/i.test(cleaned))delete v.adv[key];
+  else v.adv[key]=cleaned.slice(0,180);
+ });
+ const found=explicitAdviceFromTranscript(text,c),general=String(found.__general||"").trim();let filled=0;
+ Object.entries(found).forEach(([key,value])=>{if(key!=="__general"&&!v.adv[key]){v.adv[key]=value;filled++}});
+ if(general){["rec","se"].forEach(kind=>(c[kind]||[]).forEach((entry,index)=>{const key=kind+index;if(+v[kind][index]&&!v.adv[key]){v.adv[key]=general;filled++}}))}
+ return filled;
+}
+window.applyTranscriptAdvice=applyTranscriptAdvice;
+function cleanAdvice(value){
+ const raw=String(value||"").trim();
+ if(!/^General advice from transcript:/i.test(raw))return raw;
+ const cleaned=raw.replace(/^General advice from transcript:\s*/i,"").trim();
+ return !cleaned||/^(?:s|a|an|is|was|to|that|the)$/i.test(cleaned)?"":cleaned.slice(0,180);
+}
+function numOf(st){TAM.numberList.forEach(([w,n])=>{st=st.split(w).join(String(n))});const re=new RegExp("(?<![\\d.])(\\d{1,2})(?![\\d.])(?!\\s*(?:%|"+TAM.units.map(escRe).join("|")+"))","g");let ns=[...st.matchAll(re)].map(m=>+m[1]).filter(n=>n<=10);const f=ns.filter(n=>n!=10);if(f.length)ns=f;return ns.length?ns[0]:null}
+function levelOf(st,inv){const t=st.toLowerCase().split("பரவாயில்லை").join(""),has=a=>a.some(w=>t.includes(w));
+ const neg=/\b(?:no|denies|denied|not|without|nil|illai|illa|kidayathu)\b/.test(t)||(has(TAM.negation)&&!t.includes("முடிய"));
+ if(inv){if(/\bno (?:problem|issue|trouble)s?\b|பிரச்சனை\s*இல்ல|பிரச்சினை\s*இல்ல/.test(t))return 0;if(/\bno (?:appetite|hunger)\b|not hungry|lost (?:my )?appetite|பசி\s*(?:இல்லை|இல்ல|கிடையாது)|பசியின்மை/.test(t))return 3}
+ if(neg)return 0;if(/severe|very|unbearable|worst/.test(t)||has(TAM.severe))return 3;const n=numOf(t);if(n!==null)return n>=7?3:n>=4?2:1;if(/moderate|quite/.test(t)||has(TAM.moderate))return 2;return 1}
+function extract(draft){const v=S.v;if(!v.consent){alert("Record recording consent first.");return}
+ const english=typeof draft==="string"?draft.trim():(draft&&draft.english?String(draft.english).trim():String(v.etx||"").trim());
+ const text=english||String(v.tx||"");const c=CA[S.p.c],ss=clauses(text);let n=0,hits=[];
+ const run=(k,l)=>l.forEach((s,i)=>{const kw=kwRe(s),st=ss.find(x=>kw.test(x));if(!st)return;v[k][i]=levelOf(st,s.split("|").slice(1).includes("appetite"));v.ai[k+i]=1;n++;hits.push(`${s.split("|")[0]}: ${SEV[v[k][i]]}`)});
+ run("rec",c.rec);run("se",c.se);
+ const adviceFilled=applyTranscriptAdvice(v,c,text);
+ const e=text.match(/ecog\D{0,12}(\d)/i);if(e){v.ecog=e[1];v.ai.ecog=1;n++;hits.push(`ECOG: ${e[1]}`)}
+ if(n||adviceFilled)REC.msg=`${n} important CRF item(s) matched${adviceFilled?` and ${adviceFilled} explicit advice item(s) copied`:""}: ${hits.slice(0,5).join(" · ")}${hits.length>5?" · …":""}. Nurse review required.`;else REC.msg="No important CRF keyword or explicit advice was recognised. Edit the English draft or translate it before autofill.";
+ log(`Speech-to-text auto-filled ${n} important CRF fields and copied ${adviceFilled} explicit advice item(s) (${S.p.id}) using ${english?"English draft":"source transcript"}`);render()}
+function ovr(k){const r=prompt("Reason for overriding this flag (required):");if(!r)return;S.v.ovr[k]=r;log(`Flag ${k} overridden. Reason: ${r} (${S.p.id})`);render()}
+function unovr(k){delete S.v.ovr[k];log(`Override on ${k} reversed (${S.p.id})`);render()}
+function setSt(i,st){const p=S.pts[i];p.st=st;S.ov[p.id+p.tag]=Object.assign(S.ov[p.id+p.tag]||{},{st});log(`${p.id}: call marked ${st}`);if(st=="Missed")notify("Missed",`${p.id} (${p.tag}) call marked missed`,p.id);render()}
+function completeVisit(i){const p=S.pts[i];if(!p)return;if(!confirm(`Mark ${p.id} (${p.tag}) as completed?`))return;p.st="Done";S.ov[p.id+p.tag]=Object.assign(S.ov[p.id+p.tag]||{},{st:"Done",completedAt:new Date().toLocaleString()});log(`${p.id}: visit marked Completed`);notify("Completed",`${p.id} (${p.tag}) marked completed`,p.id);render()}
+function resched(i){const p=S.pts[i],d=prompt("New date (YYYY-MM-DD):",p.date);if(!d||isNaN(new Date(d)))return;p.date=d;p.st="Rescheduled";S.ov[p.id+p.tag]={date:d,st:"Rescheduled"};log(`${p.id}: rescheduled to ${d}`);notify("Rescheduled",`${p.id} (${p.tag}) rescheduled to ${d}`,p.id);render()}
+function remind(i){const p=S.pts[i];log(`Reminder prepared for ${p.id}`);notify("Reminder",`Reminder message ready for ${p.id} — copy or send it from here`,p.id);S.tab="Alerts";render()}
+// ---------- summary ----------
+function summary(){const v=S.v,p=S.p,c=CA[p.c];if(!Object.keys(v.rec).length&&!Object.keys(v.se).length){alert("Fill in the symptom grids first.");return}
+ const fl=flags(),rows=(k,l)=>l.map((s,i)=>(+v[k][i]?`<tr><td>${esc(s.split("|")[0])}</td><td>${SEV[v[k][i]]}</td><td>${esc(cleanAdvice(v.adv[k+i]))}</td></tr>`:"")).join("");
+ $("#sum").innerHTML=`<div style="font:14px system-ui;padding:24px"><h2>Tele-Visit Summary — ${c.n} cancer</h2><p><b>${esc(p.id)}</b> ${esc(p.name)} · ${esc(p.age)}${esc(p.sex)} · Visit ${esc(v.h.tag)} (${v.h.pl?"Unplanned":"Planned"}, ${esc(v.h.mode)}) · ${new Date().toLocaleString()}<br>Provider: ${esc(v.h.pv)} · Recording consent: ${v.consent?"Yes":"No"}</p>
+ <p><b>Chief complaints:</b> ${v.cc.filter(Boolean).map(esc).join("; ")||"—"}</p>
+ <h3>Reported symptoms (non-Nil)</h3><table border="1" cellpadding="5" style="border-collapse:collapse"><tr><th>Symptom</th><th>Severity</th><th>Advice</th></tr>${rows("rec",c.rec)}${rows("se",c.se)}</table>
+ <p>ECOG: ${esc(v.ecog)||"—"}</p><h3>Flags</h3><ul>${fl.map(f=>`<li>${esc(f.t)} — ${v.ovr[f.k]?"OVERRIDDEN by nurse: "+esc(v.ovr[f.k]):"needs attention"}</li>`).join("")||"<li>None</li>"}</ul>
+ <p><b>OPD in-person warranted:</b> ${v.d.opd?"Yes — "+esc(v.d.opdW)+" "+esc(v.d.opdD):"No"} · <b>Primary-care visit:</b> ${v.d.pcp?"Yes — "+esc(v.d.pcpW):"No"} · <b>Next visit:</b> ${v.d.nx?"In-person":"Tele"} ${esc(v.d.nxD)}</p><p><b>Remarks:</b> ${esc(v.d.rm)||"—"}</p>
+ <p style="font-size:12px">Decision-support output. Every value reviewed by the nurse; clinical judgment rests with the care team.</p></div>`;
+ (S.visits[p.id]=S.visits[p.id]||[]).push({t:new Date().toLocaleDateString(),iso:iso(new Date()),c:p.c,tag:v.h.tag,nf:fl.filter(f=>!v.ovr[f.k]).length,ecog:v.ecog,sy:(c=>[...c.rec.map((x,i)=>["R",x,v.rec[i]]),...c.se.map((x,i)=>["S",x,v.se[i]])].filter(a=>+a[2]).map(a=>a[0]+":"+a[1].split("|")[0]+"="+SEV[a[2]]).join("; "))(CA[p.c])});p.st="Done";
+ log(`Visit summary generated and saved to history (${p.id})`);S.sum=1;render()}
+// ---------- render helpers ----------
+const sel=(o,val,on)=>`<select onchange="${on}">${o.map((x,i)=>`<option value="${i}" ${val==i?"selected":""}>${x}</option>`).join("")}</select>`;
+const det=(k,t,b)=>`<details class="card" ${S.o[k]?"open":""} ontoggle="S.o['${k}']=this.open"><summary>${t}</summary>${b}</details>`;
+const grid=(k,l)=>l.map((s,i)=>{const val=+S.v[k][i]||0;return`<div class="gr"><span class="${val>=2?"hl":""}">${esc(s.split("|")[0])} ${S.v.ai[k+i]?'<span class="tag">AI</span>':""}</span>${sel(SEV,val,`setSev('${k}',${i},this.value)`)}<input placeholder="Advice (explicit or nurse)" value="${esc(cleanAdvice(S.v.adv[k+i]))}" oninput="S.v.adv['${k}${i}']=this.value"></div>`}).join("");
+const yn=(g,l,ph)=>l.map((s,i)=>`<div class="gr"><span>${esc(s)}</span>${sel(["No","Yes"],S.v[g]["y"+i]||0,`S.v.${g}.y${i}=+this.value`)}<input placeholder="${ph}" value="${esc(S.v[g]["a"+i]||"")}" oninput="S.v.${g}.a${i}=this.value"></div>`).join("");
+const tx=(path,ph,t)=>`<input ${t?`type="${t}"`:""} placeholder="${ph}" value="${esc(path.split(".").reduce((o,k)=>o[k],S.v))}" oninput="S.v.${path.replace(/\.(\d+)/g,'[$1]')}=this.value">`;
+function aiFlagView(v){
+ const ai=v.aiFlags||{};
+ if(!ai.status)return'<div class="sub" style="margin-top:8px">AI review has not been run for this visit.</div>';
+ if(ai.status==="running")return'<div class="note" style="margin-top:8px">AI is reviewing the transcript and CRF…</div>';
+ if(ai.status==="error")return`<div class="note" style="margin-top:8px"><b>AI flag review unavailable.</b><br>${esc(ai.message||"Try again after configuring the server.")}</div>`;
+ const issues=Array.isArray(ai.issues)?ai.issues:[];
+ const rows=issues.map(item=>{const level=String(item.urgency||"routine").toLowerCase(),cls=level==="urgent"?"r":(level==="priority"?"w":"");return`<div class="card" style="margin:8px 0;padding:10px;border-left:4px solid var(--${level==="urgent"?"rd":level==="priority"?"wn":"ac"})"><div class="row"><b>${esc(item.issue||"Review item")}</b><span class="tag ${cls}">${esc(level)} · ${Math.round((+item.confidence||0)*100)}% confidence</span></div>${item.evidence?`<div class="sub" style="margin-top:5px"><b>Evidence:</b> ${esc(item.evidence)}</div>`:""}${item.reason?`<div class="sub" style="margin-top:4px"><b>Why review:</b> ${esc(item.reason)}</div>`:""}${Array.isArray(item.fields)&&item.fields.length?`<div class="sub" style="margin-top:4px"><b>CRF fields:</b> ${esc(item.fields.join(", "))}</div>`:""}<div class="sub" style="margin-top:4px">Nurse verification required. This is not a diagnosis or treatment instruction.</div></div>`}).join("");
+ return`<div class="note" style="margin-top:8px"><b>AI flag summary:</b> ${esc(ai.summary||"No additional AI flags were identified.")}<br><span class="sub">Model: ${esc(ai.model||"OpenAI")} · Review every item before submission.</span></div>${rows||'<div class="sub" style="margin-top:8px">No additional AI review items were identified.</div>'}`;
+}
+function visit(){const p=S.p;if(!p)return`<div class="card">Choose a patient on the <b>Schedule</b> tab and press <b>Start visit</b>.</div>`;
+ const v=S.v,c=CA[p.c],fl=flags();
+ return`<div class="card"><div class="row"><b>${esc(p.id)} · ${esc(p.name)||"—"} · ${c.n} cancer</b><label style="margin:0"><input type="checkbox" style="width:auto" ${v.consent?"checked":""} onchange="S.v.consent=this.checked?1:0;log('Recording consent '+(this.checked?'obtained':'withdrawn')+' ('+S.p.id+')');render()"> Consent to record obtained</label></div>
+ <div class="grid"><div><label>Visit</label>${sel(["Planned","Unplanned"],v.h.pl,"S.v.h.pl=+this.value")}</div><div><label>Visit tag</label>${tx("h.tag","T1–T4")}</div><div><label>Mode of tele follow-up</label>${tx("h.mode","Audio / video")}</div><div><label>Health-care provider (name & designation)</label>${tx("h.pv","Name, designation")}</div><div><label>Start time</label>${tx("h.st","","time")}</div><div><label>Finish time</label>${tx("h.en","","time")}</div></div></div>
+ <div class="grid"><div class="card"><h2>1 · Record, upload & transcribe</h2><div class="row" style="margin-bottom:6px">${REC.on?'<button class="b" onclick="recStop()">■ Stop & transcribe</button><span class="tag r">● recording</span>':(REC.busy?'<button class="b" disabled>Transcribing audio…</button><span class="tag w">● processing</span>':'<button class="b" onclick="recStart()">🎙 Record call</button>')}<label class="b g" style="display:inline-flex;align-items:center;gap:6px;margin:0;cursor:pointer">⬆ Upload audio<input type="file" accept="audio/*,.m4a,.mp3,.wav,.ogg,.webm" style="display:none" onchange="transcribeUploaded(this.files[0])" ${REC.on||REC.busy?'disabled':''}></label><select style="width:auto" onchange="REC.lang=this.value" ${REC.on||REC.busy?'disabled':''}>${[["en-IN","English (India)"],["ta-IN","Tamil"],["hi-IN","Hindi"]].map(l=>`<option value="${l[0]}" ${REC.lang==l[0]?"selected":""}>${l[1]}</option>`).join("")}</select></div>${REC.msg?`<div class="note">${esc(REC.msg)}</div>`:""}${REC.url?`<audio controls src="${REC.url}" style="width:100%"></audio><button class="b g" onclick="recDiscard()">Discard audio</button>`:""}<label>Source transcript (Tamil or original language)</label><textarea id="tx" oninput="S.v.tx=this.value">${esc(v.tx)}</textarea>${v.etx?`<label>English draft — nurse must correct this before CRF autofill</label><textarea id="etx" oninput="S.v.etx=this.value">${esc(v.etx)}</textarea>`:""}<div class="row" style="margin-top:6px"><button class="b g" onclick="S.v.tx=SAMPLE[S.p.c];S.v.etx="";render()">Load sample</button><button class="b" onclick="extract()">Auto-fill proforma after review</button></div><div class="sub" style="margin-top:6px">Tick consent first. Audio is sent to the configured transcription provider. Review and correct both drafts before explicitly clicking Auto-fill; transcription never changes the CRF automatically.</div></div>
+ <div class="card"><h2>2 · Chief complaints</h2>${[0,1,2].map(i=>`<label>${i+1}.</label>${tx("cc."+i,"Complaint")}`).join("")}<label>Any other symptoms</label>${tx("other","Other symptoms")}<label>ECOG performance status ${v.ai.ecog?'<span class="tag">AI</span>':""}</label>${sel(["—","0","1","2","3","4","5 (dead)"],v.ecog===""?0:+v.ecog+1,"S.v.ecog=this.value==0?'':this.value-1;delete S.v.ai.ecog;render()")}</div></div>
+ ${det("rec","3 · Symptoms of recurrence",grid("rec",c.rec))}${det("se","4 · Symptoms of side effects",grid("se",c.se))}
+ <div class="card"><h2 style="margin:0">Flags for clinician review</h2>
+ ${fl.map(f=>`<div class="row" style="padding:5px 0;border-bottom:1px solid var(--ln)"><span><span class="tag ${v.ovr[f.k]?"":"r"}">${v.ovr[f.k]?"Overridden":"⚠ Needs attention"}</span> ${esc(f.t)}${v.ovr[f.k]?`<div class="sub">Reason: ${esc(v.ovr[f.k])}</div>`:""}</span>${v.ovr[f.k]?`<button class="b g" onclick="unovr('${f.k}')">Undo</button>`:`<button class="b g" onclick="ovr('${f.k}')">Override</button>`}</div>`).join("")||'<div class="sub">No rule-based flags at current thresholds.</div>'}
+ </div>
+ ${det("q","5 · Questionnaires (EORTC, ScoRe-CS, CWS, telehealth satisfaction)",QS.map((q,i)=>`<div class="gr"><span>${q} ${v.q["f"+i]?'<span class="tag">from Google Form</span>':""}${S.pro.url[i]?`<a href="${esc(proLink(i,S.p.id))}" target="_blank" rel="noopener" class="tag">open form</a>`:""}</span>${sel(["Not administered","Administered"],v.q["y"+i]||0,`S.v.q.y${i}=+this.value`)}<input placeholder="Score / reason not done" value="${esc(v.q["s"+i]||"")}" oninput="S.v.q.s${i}=this.value"></div>`).join(""))}
+ ${det("tests","6 · Advised tests & concurrent medication",c.tests.map((t,i)=>`<div class="gr"><span>${t}</span>${sel(["—","Done","Not done"],v.tests["y"+i]||0,`S.v.tests.y${i}=+this.value`)}<input placeholder="Result" value="${esc(v.tests["r"+i]||"")}" oninput="S.v.tests.r${i}=this.value"></div>`).join("")+`<label>Concurrent medication (name, dose, frequency, indication)</label><textarea style="min-height:60px" oninput="S.v.meds=this.value">${esc(v.meds)}</textarea>`)}
+ ${det("rep","6b · Blood test reports uploaded by the patient",repList(p.id))}${det("psy","7 · Psychosocial issues",yn("psy",c.psy,"Advice if Yes"))}${det("hp","8 · Health promotion",yn("hp",HP,"Concern? Present status / advice"))}
+ ${det("hcp","9 · Local health-care provider visit",`<div class="grid"><div><label>Any visit to local HCP</label>${sel(["No","Yes"],v.hcp.y,"S.v.hcp.y=+this.value")}</div><div><label>Reason / exam findings / medications / advice</label>${tx("hcp.r","Details")}</div></div>`)}
+ <div class="card"><h2>10 · Clinician plan</h2><div class="grid">
+ <div><label>OPD in-person visit warranted?</label>${sel(["No","Yes"],v.d.opd,"S.v.d.opd=+this.value")}${tx("d.opdW","Reason")}${tx("d.opdD","","date")}</div>
+ <div><label>Primary-care provider visit warranted?</label>${sel(["No","Yes"],v.d.pcp,"S.v.d.pcp=+this.value")}${tx("d.pcpW","Reason")}</div>
+ <div><label>Any concern with tele follow-up?</label>${sel(["No","Yes"],v.d.tvc,"S.v.d.tvc=+this.value")}${tx("d.tvcW","Specify")}</div>
+ <div><label>Next visit</label>${sel(["Tele follow-up","In-person"],v.d.nx,"S.v.d.nx=+this.value")}${tx("d.nxD","","date")}${tx("d.nxT","Tests for next visit")}</div></div>
+ <label>Remarks</label><textarea style="min-height:60px" oninput="S.v.d.rm=this.value">${esc(v.d.rm)}</textarea>
+ <div style="margin-top:8px"><button class="b" onclick="summary()">Generate visit summary</button> ${S.sum?'<button class="b g" onclick="window.print()">Print / save as PDF</button>':""}</div></div>`}
+function sched(){const today=iso(new Date());
+ return`<div class="card"><div class="row"><div><b>Appointments</b> <span class="tag ${S.imp?"":"w"}">${S.imp?"Imported spreadsheet":"Demo data"}</span><div class="sub">Import your appointment spreadsheet to load scheduled visits.</div></div><input type="file" accept=".xlsx,.xls" style="width:auto" onchange="imp(this.files[0])"></div>
+ <div class="grid" style="margin-top:8px"><input placeholder="Search ID / name" value="${esc(S.q)}" oninput="S.q=this.value;tbl()"><select onchange="S.nf=this.value;tbl()"><option value="">All nurses</option>${[...new Set(S.pts.map(p=>p.nurse).filter(Boolean))].sort().map(n=>`<option ${S.nf==n?"selected":""}>${esc(n)}</option>`).join("")}</select><select onchange="S.pf=this.value;tbl()">${[["all","All dates"],["today","Today"],["week","Next 7 days"],["over","Overdue"]].map(o=>`<option value="${o[0]}" ${S.pf==o[0]?"selected":""}>${o[1]}</option>`).join("")}</select></div><div class="row" style="margin-top:10px"><b>Visit section</b><span>${["all","T1","T2","T3","T4"].map(tag=>`<button class="b ${S.vf==tag?"":"g"}" onclick="S.vf='${tag}';save();render()">${tag=="all"?"All visits":tag}</button>`).join(" ")}</span></div></div>
+ <div class="card wrap"><table><thead><tr><th>Date</th><th>Participant</th><th>Patient</th><th>Cancer</th><th>Visit</th><th>Nurse</th><th>Phone</th><th>Status</th><th></th></tr></thead><tbody id="tb"></tbody></table><div class="sub" id="cnt"></div></div>`}
+function tbl(){const today=iso(new Date()),w=new Date();w.setDate(w.getDate()+7);const wk=iso(w),q=S.q.toLowerCase();
+ let l=S.pts.map((p,i)=>({p,i})).filter(({p})=>(!q||(p.id+" "+p.name).toLowerCase().includes(q))&&(!S.nf||p.nurse==S.nf)&&(S.vf=="all"||p.tag==S.vf)&&(S.pf=="all"||(S.pf=="today"&&p.date==today)||(S.pf=="week"&&p.date>=today&&p.date<=wk)||(S.pf=="over"&&p.date&&p.date<today&&p.st!="Done")));
+ l.sort((a,b)=>(a.p.date||"9").localeCompare(b.p.date||"9"));const n=l.length;l=l.slice(0,100);
+ $("#tb").innerHTML=l.map(({p,i})=>{const h=S.visits[p.id],lr=h&&h.length?h[h.length-1]:null;return`<tr><td>${p.date||"—"} ${esc(p.time||"")}</td><td>${esc(p.id)}</td><td>${esc(p.name)}</td><td>${CA[p.c].n}</td><td>${p.tag}</td><td>${esc(p.nurse)}</td><td>${esc(p.phone)}</td><td><span class="tag ${p.st=="Missed"?"r":p.st=="Rescheduled"?"w":""}">${p.st}</span> ${lr?`<span class="tag ${lr.nf?"r":""}">last visit: ${lr.nf} flag(s)</span>`:""}</td><td style="white-space:nowrap"><button class="b" onclick="start(${i})">Start</button> <button class="b g" onclick="resched(${i})">Resched.</button> <button class="b g" onclick="remind(${i})">Remind</button> <button class="b g" onclick="setSt(${i},'Missed')">Missed</button> ${p.st=="Done"?'<span class="tag">Completed</span>':'<button class="b g" onclick="completeVisit('+i+')">Completed</button>'}</td></tr>`}).join("")||'<tr><td colspan="9" class="sub">No matching appointments.</td></tr>';
+ $("#cnt").textContent=n>100?`Showing 100 of ${n} — refine the filters.`:`${n} appointment(s)`}
+function hist(){const ids=Object.keys(S.visits),id=S.hid&&S.visits[S.hid]?S.hid:ids[0];if(!id)return`<div class="card sub">No completed visits yet. Generate a visit summary to save one here.</div>`;
+ const v=S.visits[id];let ch='<div class="sub">Two or more visits are needed for a trend.</div>';
+ if(v.length>1){const W=600,H=140,x=i=>30+i*(W-60)/(v.length-1),y=s=>H-15-s*(H-30)/Math.max(1,...v.map(r=>r.nf));ch=`<svg viewBox="0 0 ${W} ${H}" style="width:100%"><line x1="30" y1="${H-15}" x2="${W-30}" y2="${H-15}" stroke="var(--ln)"/><polyline fill="none" stroke="var(--ac)" stroke-width="2" points="${v.map((r,i)=>x(i)+","+y(r.nf)).join(" ")}"/></svg><div class="sub">Open flags per visit</div>`}
+ return`<div class="card"><label style="margin:0">Participant</label><select onchange="S.hid=this.value;render()">${ids.map(i=>`<option ${i==id?"selected":""}>${esc(i)}</option>`).join("")}</select></div><div class="card"><h2>Trend</h2>${ch}</div><div class="card wrap"><table><tr><th>Date</th><th>Visit</th><th>Open flags</th><th>ECOG</th></tr>${v.map(r=>`<tr><td>${esc(r.t)}</td><td>${esc(r.tag)}</td><td>${r.nf}</td><td>${esc(r.ecog)||"—"}</td></tr>`).join("")}</table></div>`}
+function rules(){const R=[["rec","Recurrence symptom: flag at or above",SEV],["se","Side-effect symptom: flag at or above",SEV]];
+ return`<div class="card"><h2>Clinician-defined thresholds</h2><div class="note">Set by clinicians, transparent and explainable. Defaults are illustrative — set them with your PI and verify against current guidance (e.g. NCCN / ASCO). Changes are logged.</div>${R.map(r=>`<label>${r[1]}</label>${sel(r[2],S.rules[r[0]],`setR('${r[0]}',+this.value)`)}`).join("")}<label>ECOG: flag at or above</label>${sel(["0","1","2","3","4","5"],S.rules.ecog,"setR('ecog',+this.value)")}</div>`}
+function setR(k,v){const o=S.rules[k];S.rules[k]=v;log(`Clinician threshold ${k}: ${o} → ${v}`);render()}
+function audit(){return`<div class="card"><div class="row"><div class="sub">Every auto-fill, edit, override and threshold change. Saved in this browser only; entries use participant IDs, not names.</div><button class="b g" onclick="clearAll()">Clear saved data</button></div><div class="wrap"><table><tr><th>Time</th><th>Event</th></tr>${S.log.map(l=>`<tr><td>${esc(l.t)}</td><td>${esc(l.a)}</td></tr>`).join("")||'<tr><td colspan="2" class="sub">No events yet.</td></tr>'}</table></div></div>`}
+// Tamil is the primary clinic workflow; the nurse can switch to English or Hindi.
+const REC={on:false,busy:false,url:"",lang:"ta-IN",msg:"",provider:""};let _mr,_sr,_ch=[],_st;
+function srMsg(c){return({"not-allowed":"Microphone blocked. Click the lock icon in the address bar, allow Microphone, then press Record again.","service-not-allowed":"The browser's speech service is not enabled. On Windows: Settings > Privacy & security > Speech > turn ON 'Online speech recognition', and allow microphone access for your browser. Or try Chrome.","network":"Cannot reach the browser's speech service. Check your internet connection (dictation needs it).","audio-capture":"No microphone found, or another app is using it.","language-not-supported":"This browser cannot dictate in the selected language. Try English, or type the transcript.","no-speech":"No speech heard. Speak closer to the microphone."})[c]||("Speech recognition: "+c)}
+async function recStart(){if(!S.v.consent){alert("Tick the recording-consent box first.");return}
+ if(REC.busy){return}
+ if(typeof MediaRecorder=="undefined"){REC.msg="This browser cannot record audio. Open the app in Chrome or Edge.";render();return}
+ if(!navigator.mediaDevices||typeof navigator.mediaDevices.getUserMedia!=="function"){
+  REC.msg="Live microphone access is unavailable in this in-app browser. Open http://127.0.0.1:8765 in Chrome or Edge and allow Microphone.";render();return;
+ }
+  if(REC.url){try{URL.revokeObjectURL(REC.url)}catch(e){}REC.url=""}
+  try{_st=await navigator.mediaDevices.getUserMedia({audio:true})}catch(e){REC.msg="Microphone unavailable or blocked: "+(e.message||e.name||"permission denied")+". Open the site in Chrome or Edge and allow Microphone.";render();return}
+ _ch=[];_sr=null;_mr=new MediaRecorder(_st);_mr.ondataavailable=e=>_ch.push(e.data);
+ _mr.onstop=async()=>{const blob=new Blob(_ch,{type:_mr.mimeType||"audio/webm"});if(REC.url)URL.revokeObjectURL(REC.url);REC.url=URL.createObjectURL(blob);_st.getTracks().forEach(t=>t.stop());await transcribeLiveBlob(blob)};
+ _mr.start();REC.on=true;REC.msg="";const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ // Browser dictation can hallucinate repeated Tamil filler; local audio is authoritative for Tamil.
+ if(SR&&REC.lang!=="ta-IN"){_sr=new SR();_sr.lang=REC.lang;_sr.continuous=true;_sr.interimResults=false;
+  _sr.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal){S.v.tx+=(S.v.tx&&!/\n$/.test(S.v.tx)?"\n":"")+e.results[i][0].transcript.trim();const t=$("#tx");if(t)t.value=S.v.tx}};
+  _sr.onerror=e=>{REC.msg=srMsg(e.error);if(["not-allowed","service-not-allowed","audio-capture","language-not-supported","network"].includes(e.error)){REC.on=false;try{_sr.stop()}catch(x){}try{_mr&&_mr.state!="inactive"&&_mr.stop()}catch(x){}}render()};_sr.onend=()=>{if(REC.on)try{_sr.start()}catch(x){}};_sr.start()}
+ else if(REC.lang==="ta-IN") REC.msg="Tamil audio is recording locally; the transcript will appear after Stop. Browser dictation is disabled to avoid repeated text.";
+ else REC.msg="No live speech-to-text in this browser (use Chrome or Edge). Audio is still recorded; type or paste the transcript.";
+ log(`Recording started (${S.p.id}, ${REC.lang})`);render()}
+async function requestTranscription(data){
+ const response=await fetch("/api/transcribe",{method:"POST",body:data,credentials:"same-origin",headers:{Accept:"application/json","X-Transcription-Async":"1"}});
+ let body={};try{body=await response.json()}catch(e){}
+ if(!response.ok)throw new Error(body.detail||body.message||("Transcription service returned "+response.status));
+ if(!body.job_id)return body;
+ let lastStage="";
+ for(;;){
+  const poll=await fetch("/api/transcribe/"+encodeURIComponent(body.job_id),{credentials:"same-origin",headers:{Accept:"application/json"}});let state={};try{state=await poll.json()}catch(e){}
+  if(!poll.ok)throw new Error(state.detail||("Transcription job returned "+poll.status));
+  if(state.status==="complete")return state;
+  if(state.status==="error")throw new Error(state.detail||"Local transcription failed.");
+   const stage=String(state.stage||state.status||"processing");if(stage!==lastStage){REC.msg="Transcribing with "+(REC.provider||"the configured service")+"… "+stage+". Keep this tab open.";render();lastStage=stage}
+  await new Promise(r=>setTimeout(r,1200));
+ }
+}
+async function ensureLocalService(){
+ if(!["127.0.0.1","localhost"].includes(location.hostname))
+  throw new Error("Open the local app at http://127.0.0.1:8765 (the hosted preview has no transcription service).");
+ let response;
+ try{response=await fetch("/health",{cache:"no-store",credentials:"same-origin"})}
+ catch(e){throw new Error("Local service is not running. Start run-local.bat, then reopen http://127.0.0.1:8765.")}
+  let health={};try{health=await response.json()}catch(e){}
+  if(!response.ok||!health.ok||!health.provider)
+   throw new Error("Transcription service is unavailable. Start run-openai.bat (OpenAI) or run-local.bat (offline), then reopen http://127.0.0.1:8765.");
+  if(health.provider==="openai"&&!health.key_configured)
+   throw new Error("OpenAI mode is running but OPENAI_API_KEY is missing in the launcher window. Set a current key there, restart run-openai.bat, and try again.");
+  REC.provider=health.provider==="openai"?`OpenAI (${health.model||"configured models"})`:`local Whisper (${health.model||"base"})`;
+}
+async function transcribeLiveBlob(blob){
+ const quickTranscript=String(S.v.tx||"").trim();
+ if(quickTranscript){
+  REC.msg="Live transcript captured; waiting for configured English refinement. CRF is not filled yet.";
+  render();
+ }
+ REC.busy=true;if(!quickTranscript){REC.msg="Transcribing recording…";render()}
+ try{
+  await ensureLocalService();
+  const data=new FormData(),ext=(blob.type||"").includes("mp4")?"m4a":"webm";
+  data.append("audio",blob,"live-recording."+ext);data.append("language",REC.lang||"ta-IN");
+  const body=await requestTranscription(data);
+  const transcript=String(body.transcript||body.text||"").trim(),english=String(body.english_transcript||body.translation||"").trim();
+  if(!transcript&&!S.v.tx.trim())throw new Error("No speech was detected.");
+  if(transcript)S.v.tx=transcript;
+  if(english)S.v.etx=english;
+  if(body.quality_warning){REC.msg=String(body.quality_warning);render();return}
+  REC.msg=english?`Transcript and English draft received via ${REC.provider||"configured service"}. Review/correct the English draft, then click Auto-fill proforma.`:"Transcript received; nurse translation is required before autofill.";
+  render();
+ }catch(e){
+  REC.msg="Transcription unavailable: "+(e.message||e)+". You can type or paste the transcript.";
+  render();
+ }finally{REC.busy=false;}
+}
+async function transcribeUploaded(file){
+ if(!file)return;if(!S.v.consent){alert("Tick the recording-consent box first.");return}
+ if(file.size>50*1024*1024){alert("Audio exceeds the 50 MB limit.");return}
+ if(REC.busy||REC.on)return;
+ try{await ensureLocalService()}catch(e){REC.msg=e.message||String(e);render();return}
+ if(REC.url)URL.revokeObjectURL(REC.url);REC.url=URL.createObjectURL(file);REC.busy=true;REC.msg="Transcribing uploaded audio…";render();
+ try{const data=new FormData();data.append("audio",file,file.name||"uploaded-audio");data.append("language",REC.lang||"ta-IN");const body=await requestTranscription(data);const transcript=String(body.transcript||body.text||"").trim(),english=String(body.english_transcript||body.translation||"").trim();if(!transcript&&!english)throw new Error("No speech was detected.");if(transcript)S.v.tx=transcript;if(english)S.v.etx=english;if(body.quality_warning){REC.msg=String(body.quality_warning);render();return}REC.msg=english?`Uploaded audio translated via ${REC.provider||"configured service"}; review/correct the English draft, then click Auto-fill proforma.`:"Uploaded audio transcribed; nurse translation is required before autofill.";render()}catch(e){REC.msg="Transcription unavailable: "+(e.message||e)+". You can type or paste the transcript.";render()}finally{REC.busy=false;render()}
+}
+function recStop(){if(REC.busy)return;REC.on=false;try{_sr&&_sr.stop()}catch(e){}try{_mr&&_mr.state!="inactive"&&_mr.stop()}catch(e){}log(`Recording stopped (${S.p.id})`);if(!_mr){REC.msg="No recording was captured. Check microphone permission or upload the audio file.";render()}else if(_mr.state==="inactive"&&!REC.busy){REC.msg="Recording captured; sending it to the configured transcription service…";render()}}
+function recDiscard(){if(REC.url)URL.revokeObjectURL(REC.url);REC.url="";render()}
+function toast(m){const t=$("#toast");t.textContent=m;t.style.opacity=1;clearTimeout(window._tt);window._tt=setTimeout(()=>t.style.opacity=0,3500)}
+function notify(type,msg,pid){S.notes.unshift({t:new Date().toLocaleString(),type,msg,pid,r:0});toast(msg);try{if(window.Notification&&Notification.permission=="granted")new Notification("Survivorship care: "+type,{body:msg})}catch(e){}save()}
+function scan(){const t=iso(new Date()),c=new Date();c.setDate(c.getDate()-14);const cut=iso(c),d=S.pts.filter(p=>p.date==t&&p.st!="Done"),o=S.pts.filter(p=>p.date&&p.date<t&&p.date>=cut&&p.st!="Done"&&p.st!="Rescheduled");
+ const add=(ty,m)=>{if(!S.notes.some(x=>x.msg===m))notify(ty,m)};if(d.length)add("Due today",`${t}: ${d.length} tele follow-up call(s) due today`);if(o.length)add("Overdue",`${t}: ${o.length} call(s) in the last 14 days without a completed visit`)}
+function patMsg(pid,ty){const p=S.pts.find(x=>x.id==pid);if(!p)return"";const w=p.date||"a date we will confirm";
+ return ty=="Missed"?`Dear patient, we could not reach you for your tele follow-up call (${p.tag}). Please tell us a suitable time. – Survivorship care team`:ty=="Rescheduled"?`Dear patient, your tele follow-up call (${p.tag}) has been rescheduled to ${w}. Please keep this phone available. – Survivorship care team`:`Dear patient, your tele follow-up call (${p.tag}) is on ${w}. Please keep this phone available. – Survivorship care team`}
+function waLink(pid,ty){const p=S.pts.find(x=>x.id==pid);let n=String(p&&p.phone||"").replace(/\D/g,"");if(n.length==10)n="91"+n;return n.length>=11?"https://wa.me/"+n+"?text="+encodeURIComponent(patMsg(pid,ty)):""}
+function cp(k){const n=S.notes[k],m=patMsg(n.pid,n.type);navigator.clipboard.writeText(m).then(()=>toast("Message copied"),()=>prompt("Copy this message:",m))}
+function alerts(){const nb=window.Notification?Notification.permission:"unsupported";
+ return`<div class="card"><div class="row"><div><b>Alerts</b><div class="sub">Reschedules, missed and due calls, uploads and form scores. Patient messages are prepared for you to review and send — nothing is sent automatically.</div></div><div>${nb=="default"?'<button class="b g" onclick="Notification.requestPermission().then(render)">Enable browser alerts</button>':`<span class="tag">browser alerts: ${nb}</span>`} <button class="b g" onclick="S.notes.forEach(n=>n.r=1);save();render()">Mark all read</button></div></div></div>`+
+ (S.notes.map((n,k)=>`<div class="card" style="${n.r?"opacity:.6":""}"><div class="row"><span><span class="tag ${/Missed|Overdue/.test(n.type)?"r":/Rescheduled|Due/.test(n.type)?"w":""}">${esc(n.type)}</span> ${esc(n.msg)}<div class="sub">${esc(n.t)}</div></span><span>${n.pid&&S.pts.find(p=>p.id==n.pid)&&/Missed|Rescheduled|Reminder|Due/.test(n.type)?`<button class="b g" onclick="cp(${k})">Copy message</button>${waLink(n.pid,n.type)?` <a class="tag" href="${waLink(n.pid,n.type)}" target="_blank" rel="noopener">WhatsApp</a>`:""}`:""}</span></div></div>`).join("")||'<div class="card sub">No alerts yet.</div>')}
+function repList(pid){const l=S.reports[pid]||[];return l.length?l.map(r=>`<div class="row" style="padding:4px 0;border-bottom:1px solid var(--ln)"><span>${esc(r.name)} <span class="sub">${esc(r.date||"no date")} · ${(r.size/1024).toFixed(0)} KB · uploaded ${esc(r.t)}</span></span><a class="tag" href="${r.url}" target="_blank" rel="noopener">open</a></div>`).join(""):'<div class="sub">No report uploaded for this participant in this session.</div>'}
+function upl(f){const pid=S.pp||(S.pts[0]||{}).id;if(!f||!pid)return;if(f.size>10485760){alert("File is larger than 10 MB.");return}if(!/pdf|image/.test(f.type)){alert("Please upload a PDF or an image.");return}
+ (S.reports[pid]=S.reports[pid]||[]).push({name:f.name,size:f.size,url:URL.createObjectURL(f),date:($("#rd")||{}).value||"",t:new Date().toLocaleString()});storeReport(pid,f);log(`Patient uploaded a blood report (${pid})`);notify("Report",`New blood test report uploaded for ${pid}`,pid);render()}
+function patient(){const pid=S.pp||(S.pts[0]||{}).id||"";
+ return`<div class="card"><h2>Patient portal (demo)</h2><div class="note">This is what a patient would see. In a real deployment the patient opens their own secure link and signs in. Uploaded files are encrypted and kept on this device only; they cannot reach staff on other devices until a server is connected.</div>
+ <label>Your participant ID</label><select onchange="S.pp=this.value;render()">${S.pts.slice(0,300).map(p=>`<option ${p.id==pid?"selected":""}>${esc(p.id)}</option>`).join("")}</select>
+ <label>Date of the blood test</label><input type="date" id="rd"><label>Upload your blood test report (PDF or photo, max 10 MB)</label><input type="file" accept=".pdf,image/*" onchange="upl(this.files[0])">
+ <h2 style="margin-top:12px">Your uploaded reports</h2>${repList(pid)}</div>
+ <div class="card"><h2>Your questionnaires</h2>${QS.map((q,i)=>S.pro.url[i]?`<div class="row" style="padding:4px 0"><span>${q}</span><a class="tag" href="${esc(proLink(i,pid))}" target="_blank" rel="noopener">Fill now</a></div>`:"").join("")||'<div class="sub">No questionnaire links yet — staff add them in the PRO forms tab.</div>'}</div>`}
+function proLink(i,pid){const u=S.pro.url[i]||"",e=String(S.pro.ent[i]||"").replace(/\D/g,"");if(!u)return"";return u+(u.includes("?")?"&":"?")+"usp=pp_url"+(e?"&entry."+e+"="+encodeURIComponent(pid):"")}
+function proforms(){return`
+ <div class="card"><h2>1 · Import PRO responses</h2><div class="note">Choose the CSV or XLSX exported from your questionnaire responses. The file is processed in this browser only.</div><input type="file" accept=".csv,.xlsx" onchange="proImp(this.files[0])">${S.pi?proMap():""}</div>
+ <div class="card"><h2>2 · Scores loaded</h2><div class="sub">${Object.keys(S.pro.sc).length} participant(s) have imported scores; they pre-fill the questionnaire section when you start that participant's visit.</div></div>`}
+function proImp(f){if(!f)return;const r=new FileReader();r.onload=e=>{try{const wb=XLSX.read(e.target.result,{type:"array"}),rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true,defval:null}),H=rows[0].map(h=>String(h||"")),g=rx=>H.findIndex(h=>rx.test(h));
+ S.pi={H,rows:rows.slice(1),m:{id:g(/participant/i),q:[g(/global health|qlq|c30/i),g(/score-?cs/i),g(/cws|worry/i),g(/satisf/i)]}};render()}catch(x){alert("Could not read that file: "+x.message)}};r.readAsArrayBuffer(f)}
+function proMap(){const o=sel=>`<option value="-1">— none —</option>`+S.pi.H.map((h,i)=>`<option value="${i}" ${sel==i?"selected":""}>${esc(h.slice(0,60))}</option>`).join("");
+ return`<div class="note" style="margin-top:8px">Pick the column holding each score. Google Forms stores raw answers, so add a score column in the Sheet first (e.g. a SUM formula) — this app does not compute EORTC scoring.</div><label>Participant ID column</label><select onchange="S.pi.m.id=+this.value">${o(S.pi.m.id)}</select>${QS.map((q,i)=>`<label>${q} — score column</label><select onchange="S.pi.m.q[${i}]=+this.value">${o(S.pi.m.q[i])}</select>`).join("")}<div style="margin-top:8px"><button class="b" onclick="proApply()">Apply scores</button></div>`}
+function proApply(){const m=S.pi.m;if(m.id<0){alert("Choose the participant ID column.");return}let n=0;S.pi.rows.forEach(r=>{const id=String(r[m.id]||"").trim();if(!id)return;const o=S.pro.sc[id]=S.pro.sc[id]||{};m.q.forEach((c,i)=>{if(c>=0&&r[c]!=null&&r[c]!=="")o[i]=r[c]});n++});log(`PRO scores imported from ${n} response rows`);notify("PRO scores",`${n} Google Form response(s) loaded`);S.pi=null;render()}
+function render(){if(S.locked){$("#nav").innerHTML="";$("#app").innerHTML=lockUI();return}$("#nav").innerHTML=["Schedule","Tele-visit","Patient","PRO forms","Alerts","History","Share","Flag rules","Audit log"].map(t=>`<button class="${S.tab==t?"on":""}" onclick="S.tab='${t}';render()">${t}${t=="Alerts"&&S.notes.some(n=>!n.r)?" 🔔"+S.notes.filter(n=>!n.r).length:""}</button>`).join("");
+ $("#nav").insertAdjacentHTML("beforeend",'<button onclick="location.reload()">🔒 Lock</button>');
+ $("#app").innerHTML=S.tab=="Schedule"?sched():S.tab=="Tele-visit"?visit():S.tab=="Patient"?patient():S.tab=="PRO forms"?proforms():S.tab=="Alerts"?alerts():S.tab=="History"?hist():S.tab=="Flag rules"?rules():S.tab=="Share"?shareV():audit();
+ if(S.tab=="Schedule")tbl()}
+render();
+if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=56").catch(()=>{}));
+</script><script src="role-login.js?v=36"></script><script src="crf-workflow.js?v=55"></script></body></html>
